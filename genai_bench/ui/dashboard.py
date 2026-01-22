@@ -392,8 +392,19 @@ Dashboard = Union[RichLiveDashboard, MinimalDashboard]
 
 
 def create_dashboard(metrics_time_unit: str = "s") -> Dashboard:
-    """Factory function that returns either a NoOpDashboard or RealDashboard based
-    on ENABLE_UI."""
+    """Factory function that returns dashboard based on HEADLESS and ENABLE_UI.
+
+    Priority:
+    - HEADLESS=true -> MinimalDashboard (no console output)
+    - ENABLE_UI=false -> MinimalDashboard (console logging)
+    - Default -> RichLiveDashboard (full UI)
+    """
+    headless_str = os.getenv("HEADLESS", "false").lower()
+    headless = headless_str in ("true", "1", "yes", "on")
+
+    if headless:
+        return MinimalDashboard(metrics_time_unit)
+
     enable_ui_str = os.getenv("ENABLE_UI", "true").lower()
     enable_ui = enable_ui_str in ("true", "1", "yes", "on")
     return (

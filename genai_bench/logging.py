@@ -117,6 +117,8 @@ class LoggingManager:
     def init_logging(self):
         """Initialize logging based on command type."""
         log_level = os.getenv("GENAI_BENCH_LOGGING_LEVEL", "INFO").upper()
+        headless_str = os.getenv("HEADLESS", "false").lower()
+        headless = headless_str in ("true", "1", "yes", "on")
         enable_ui_str = os.getenv("ENABLE_UI", "true").lower()
         enable_ui = enable_ui_str in ("true", "1", "yes", "on")
 
@@ -126,9 +128,15 @@ class LoggingManager:
         file_handler = self.get_file_handler()
 
         if self.command_type == "benchmark":
-            extra_handlers = (
-                self.init_ui_logging() if enable_ui else [self.get_console_handler()]
-            )
+            if headless:
+                # HEADLESS mode: no console output at all
+                extra_handlers = []
+            elif enable_ui:
+                # UI mode: rich dashboard with live updates
+                extra_handlers = self.init_ui_logging()
+            else:
+                # No UI mode: console logging only
+                extra_handlers = [self.get_console_handler()]
         else:
             extra_handlers = [self.get_rich_handler()]
 
